@@ -1,8 +1,8 @@
-use std::ffi::OsString;
 use std::path::PathBuf;
 use bio_anno_rs::BEDGraphData;
+use std::error::Error;
 
-use clap::{Arg, ArgAction, Command};
+use clap::{Arg, Command, value_parser};
 
 fn cli() -> Command<'static> {
     Command::new("bgtools")
@@ -15,21 +15,23 @@ fn cli() -> Command<'static> {
                 .about("Applies a windowed rolling mean to the data")
                 .arg(
                     Arg::new("winsize")
+                        .value_parser(value_parser!(usize))
                         .short('w')
                         .long("winsize")
-                        .help("The size of the window to convolve over the chosen column")
+                        .help("The size of the window to convolve over the score column")
                         .takes_value(true),
                 )
                 .arg(
                     Arg::new("infile")
-                        .short("i")
+                        .value_parser(value_parser!(PathBuf))
+                        .short('i')
                         .long("infile")
                         .help("The input file")
                         .takes_value(true),
                 )
                 .arg(
                     Arg::with_name("circular")
-                        .short("c")
+                        .short('c')
                         .long("circular")
                         .required(false)
                         .takes_value(false)
@@ -38,7 +40,7 @@ fn cli() -> Command<'static> {
         )
 }
 
-fn main() {
+fn main() -> Result<(),Box<dyn Error>> {
     let matches = cli().get_matches();
 
     match matches.subcommand() {
@@ -46,20 +48,21 @@ fn main() {
 
             let winsize: usize = *rm_matches
                 .get_one::<usize>("winsize")
-                .expect("Window size");
+                .expect("--winsize argument is required");
 
             let infile = rm_matches
                 .get_one::<PathBuf>("infile")
-                .expect("input file");
+                .expect("--infile argument is required");
 
             let circ = rm_matches.is_present("circular");
 
             let bgd = BEDGraphData::from_file( infile )?;
             let result = bgd.roll_mean( winsize, circ )?;
-            result.print();
+            result.print()?;
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
 
+    Ok(())
 
 }
