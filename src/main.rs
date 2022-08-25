@@ -38,6 +38,18 @@ fn cli() -> Command<'static> {
                         .help("Include if the chromosomes are all circular"),
                 ),
         )
+        .subcommand(
+            Command::new("cpm")
+                .about("Returns a bedgraph file with cpm calculated")
+                .arg(
+                    Arg::new("infile")
+                        .value_parser(value_parser!(PathBuf))
+                        .short('i')
+                        .long("infile")
+                        .help("The input file")
+                        .takes_value(true),
+                ),
+        )
 }
 
 fn main() -> Result<(),Box<dyn Error>> {
@@ -64,7 +76,15 @@ fn main() -> Result<(),Box<dyn Error>> {
             }
             let result = bgd.roll_mean( winsize_line, circ )?;
             result.print()?;
-        }
+        },
+        Some(("cpm", cpm_matches)) => {
+             let infile = cpm_matches
+                .get_one::<PathBuf>("infile")
+                .expect("--infile argument is required");
+            let mut bgd = BEDGraphData::from_file( infile )?;
+            bgd.to_cpm()?;
+            bgd.print()?;
+        },
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
 
