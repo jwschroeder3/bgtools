@@ -18,7 +18,7 @@ fn cli() -> Command<'static> {
                         .value_parser(value_parser!(usize))
                         .short('w')
                         .long("winsize")
-                        .help("The size of the window to convolve over the score column")
+                        .help("The size of the window (in base pairs) to roll over the score column")
                         .takes_value(true),
                 )
                 .arg(
@@ -57,7 +57,12 @@ fn main() -> Result<(),Box<dyn Error>> {
             let circ = rm_matches.is_present("circular");
 
             let bgd = BEDGraphData::from_file( infile )?;
-            let result = bgd.roll_mean( winsize, circ )?;
+            let resolution = bgd.get_resolution();
+            let mut winsize_line = winsize / resolution;
+            if winsize_line % 2 == 0 {
+                winsize_line += 1;
+            }
+            let result = bgd.roll_mean( winsize_line, circ )?;
             result.print()?;
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
