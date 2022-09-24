@@ -39,6 +39,18 @@ fn cli() -> Command<'static> {
                 ),
         )
         .subcommand(
+            Command::new("robust_z")
+                .about("Calculates robust z-score for each positions")
+                .arg(
+                    Arg::new("infile")
+                        .value_parser(value_parser!(PathBuf))
+                        .short('i')
+                        .long("infile")
+                        .help("The input file")
+                        .takes_value(true),
+                ),
+        )
+        .subcommand(
             Command::new("cpm")
                 .about("Returns a bedgraph file with cpm calculated")
                 .arg(
@@ -49,6 +61,7 @@ fn cli() -> Command<'static> {
                         .help("The input file")
                         .takes_value(true),
                 ),
+
         )
 }
 
@@ -75,6 +88,15 @@ fn main() -> Result<(),Box<dyn Error>> {
                 winsize_line += 1;
             }
             let result = bgd.roll_mean( winsize_line, circ )?;
+            result.print()?;
+        },
+        Some(("robust_z", rm_matches)) => {
+            let infile = rm_matches
+                .get_one::<PathBuf>("infile")
+                .expect("--infile argument is required");
+
+            let bgd = BEDGraphData::from_file( infile )?;
+            let result = bgd.robust_z()?;
             result.print()?;
         },
         Some(("cpm", cpm_matches)) => {
