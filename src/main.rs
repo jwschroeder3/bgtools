@@ -81,7 +81,12 @@ fn main() -> Result<(),Box<dyn Error>> {
 
             let circ = rm_matches.is_present("circular");
 
-            let bgd = BEDGraphData::from_file( infile )?;
+            let bgd =
+                if infile == &PathBuf::from("-") {
+                    BEDGraphData::from_stdin()?
+                } else {
+                    BEDGraphData::from_file( infile )?
+                };
             let resolution = bgd.get_resolution();
             let mut winsize_line = winsize / resolution;
             if winsize_line % 2 == 0 {
