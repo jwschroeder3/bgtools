@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 use bio_anno_rs::BEDGraphData;
+use bio_anno_rs::RollFn;
 use std::error::Error;
+use std::process::exit;
 
 use clap::{Arg, Command, value_parser};
 
@@ -11,15 +13,25 @@ fn cli() -> Command<'static> {
         .arg_required_else_help(true)
         //.allow_external_subcommands(true)
         .subcommand(
-            Command::new("roll_mean")
+            Command::new("roll")
                 .about("Applies a windowed rolling mean to the data")
+                .arg(
+                    Arg::new("function")
+                        //.value_parser(value_parser!(String))
+                        .short('f')
+                        .long("function")
+                        .help("The function to be rolled over the scores in `--infile`. Currently supported functions are `mean` or `median`.")
+                        .takes_value(true)
+                        .required(true),
+                )
                 .arg(
                     Arg::new("winsize")
                         .value_parser(value_parser!(usize))
                         .short('w')
                         .long("winsize")
                         .help("The size of the window (in base pairs) to roll over the score column")
-                        .takes_value(true),
+                        .takes_value(true)
+                        .required(true),
                 )
                 .arg(
                     Arg::new("infile")
@@ -27,7 +39,8 @@ fn cli() -> Command<'static> {
                         .short('i')
                         .long("infile")
                         .help("The input file")
-                        .takes_value(true),
+                        .takes_value(true)
+                        .required(true),
                 )
                 .arg(
                     Arg::with_name("circular")
@@ -47,7 +60,8 @@ fn cli() -> Command<'static> {
                         .short('i')
                         .long("infile")
                         .help("The input file")
-                        .takes_value(true),
+                        .takes_value(true)
+                        .required(true),
                 ),
         )
         .subcommand(
@@ -59,7 +73,8 @@ fn cli() -> Command<'static> {
                         .short('i')
                         .long("infile")
                         .help("The input file")
-                        .takes_value(true),
+                        .takes_value(true)
+                        .required(true),
                 ),
 
         )
@@ -69,7 +84,16 @@ fn main() -> Result<(),Box<dyn Error>> {
     let matches = cli().get_matches();
 
     match matches.subcommand() {
-        Some(("roll_mean", rm_matches)) => {
+        Some(("roll", rm_matches)) => {
+            let allowed_functions = vec!["mean","median"];
+
+            let fun: &str = rm_matches
+                .get_one::<String>("function")
+                .expect("--function must be included, and can be either `mean` or `median`");
+            if !(allowed_functions.contains(&fun)) {
+                eprintln!("Your value to `--function` is not allowed. You passed {}, but it must be either \"mean\" or \"median\"", &fun);
+                exit(1);
+            }
 
             let winsize: usize = *rm_matches
                 .get_one::<usize>("winsize")
@@ -92,7 +116,15 @@ fn main() -> Result<(),Box<dyn Error>> {
             if winsize_line % 2 == 0 {
                 winsize_line += 1;
             }
-            let result = bgd.roll_mean( winsize_line, circ )?;
+            let result = 
+                if fun == "median" {
+                    bgd.roll_fn( winsize_line, circ, RollFn::Median )?
+                } else if fun == "mean" {
+                    bgd.roll_fn( winsize_line, circ, RollFn::Mean )?
+                } else {
+                    eprintln!("You did not pass an allowable function to `--function`");
+                    exit(1);
+                };
             result.print()?;
         },
         Some(("robust_z", rm_matches)) => {
