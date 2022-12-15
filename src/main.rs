@@ -14,7 +14,7 @@ fn cli() -> Command<'static> {
         //.allow_external_subcommands(true)
         .subcommand(
             Command::new("roll")
-                .about("Applies a windowed rolling mean to the data")
+                .about("Applies a windowed rolling function to the data. The function is set using the `--function` argument (see `bgtools roll --help` for details)")
                 .arg(
                     Arg::new("function")
                         //.value_parser(value_parser!(String))
