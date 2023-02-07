@@ -1,2 +1,9 @@
-/target
+/target/CACHEDIR.TAG
+/target/.rustc_info.json
+/target/release/.fingerprint
+/target/release/.cargo-lock
+/target/release/build
+/target/release/deps
+/target/release/examples
+/target/release/incremental
 /Cargo.lock
