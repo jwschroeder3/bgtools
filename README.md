@@ -19,3 +19,6 @@ To get help documentation for bgtools, simply run `bgtools --help`.
 Likewise, to get help documentation for any subcommand, run `bgtools <subcommand> --help`,
 substituting the subcommand of interest for `<subcommand>`
 
+Note that the above instructions assume the `bgtools` binary found in `target/release`
+is in your `PATH` environment variable.
+
