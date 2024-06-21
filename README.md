@@ -15,6 +15,8 @@ bgtools robust_z
 bgtools cpm
 # For writing contiguous regions of a bedgraph file to stdout in bed format
 bgtools contiguous_regions
+# For taking a bedgraph file with non-uniform bin widths and making them uniform
+bgtools unify_widths
 ```
 
 To get help documentation for bgtools, simply run `bgtools --help`.
