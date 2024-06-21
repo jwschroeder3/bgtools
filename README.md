@@ -13,6 +13,8 @@ bgtools roll
 bgtools robust_z
 # For getting counts per million
 bgtools cpm
+# For writing contiguous regions of a bedgraph file to stdout in bed format
+bgtools contiguous_regions
 ```
 
 To get help documentation for bgtools, simply run `bgtools --help`.

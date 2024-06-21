@@ -13,6 +13,28 @@ fn cli() -> Command<'static> {
         .arg_required_else_help(true)
         //.allow_external_subcommands(true)
         .subcommand(
+            Command::new("unify_widths")
+                .about("Takes an input bedgraph file with non-uniform widths and converts it to uniform bin widths at the user-specified output width. Exits with an error if any region in the input bedgraph file is not evenly divisible by the desired output width. Prints resulting bedgraph lines to stdout.")
+                .arg(
+                    Arg::new("infile")
+                        .value_parser(value_parser!(PathBuf))
+                        .short('i')
+                        .long("infile")
+                        .help("The input file")
+                        .takes_value(true)
+                        .required(true),
+                )
+                .arg(
+                    Arg::new("winsize")
+                        .value_parser(value_parser!(usize))
+                        .short('w')
+                        .long("winsize")
+                        .help("The desired size of the windows in the ouptut file")
+                        .takes_value(true)
+                        .required(true),
+                ),
+        )
+        .subcommand(
             Command::new("roll")
                 .about("Applies a windowed rolling function to the data. The function is set using the `--function` argument (see `bgtools roll --help` for details)")
                 .arg(
@@ -78,6 +100,21 @@ fn cli() -> Command<'static> {
                 ),
 
         )
+        .subcommand(
+            Command::new("contiguous_regions")
+                .about("Prints contiguous regions in --infile to stdout in bed format")
+                .arg(
+                    Arg::new("infile")
+                        .value_parser(value_parser!(PathBuf))
+                        .short('i')
+                        .long("infile")
+                        .help("The input file")
+                        .takes_value(true)
+                        .required(true),
+                ),
+
+        )
+
 }
 
 fn main() -> Result<(),Box<dyn Error>> {
@@ -127,6 +164,18 @@ fn main() -> Result<(),Box<dyn Error>> {
                 };
             result.print()?;
         },
+        Some(("unify_widths", rm_matches)) => {
+            let infile = rm_matches
+                .get_one::<PathBuf>("infile")
+                .expect("--infile argument is required");
+            let winsize: usize = *rm_matches
+                .get_one::<usize>("winsize")
+                .expect("--winsize argument is required");
+
+            let bgd = BEDGraphData::from_file( infile )?;
+            let result = bgd.unify_bins( winsize )?;
+            result.print()?;
+        },
         Some(("robust_z", rm_matches)) => {
             let infile = rm_matches
                 .get_one::<PathBuf>("infile")
@@ -137,12 +186,23 @@ fn main() -> Result<(),Box<dyn Error>> {
             result.print()?;
         },
         Some(("cpm", cpm_matches)) => {
-             let infile = cpm_matches
+            let infile = cpm_matches
                 .get_one::<PathBuf>("infile")
                 .expect("--infile argument is required");
             let mut bgd = BEDGraphData::from_file( infile )?;
             bgd.to_cpm()?;
             bgd.print()?;
+        },
+        Some(("contiguous_regions", ctg_matches)) => {
+            let infile = ctg_matches
+                .get_one::<PathBuf>("infile")
+                .expect("--infile argument is required");
+            let _ =
+                if infile == &PathBuf::from("-") {
+                    BEDGraphData::print_contiguous_regions_from_stdin()?
+                } else {
+                    BEDGraphData::print_contiguous_regions( infile )?
+                };
         },
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
