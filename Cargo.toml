@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.0", features = ["derive"] }
 bio-anno-rs = { git = "https://github.com/jwschroeder3/bio-anno-rs.git" }
+#bio-anno-rs = { path = "../bio-anno-rs" }
